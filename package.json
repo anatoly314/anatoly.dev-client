@@ -53,6 +53,8 @@
     "core-js": "^3.6.5",
     "xterm": "^4.8.1",
     "xterm-addon-fit": "^0.4.0",
-    "xterm-addon-attach": "^0.6.0"
+    "socket.io-client": "^2.3.0",
+    "lodash.debounce": "^4.0.8",
+    "lodash.throttle": "^4.1.1"
   }
 }

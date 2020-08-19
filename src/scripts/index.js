@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'development') {
 
 const xterm = new Xterm('xterm');
 
-window.onresize = () => xterm.fit();
+window.onresize = () => xterm.fitAddon.fit();
 
 console.log(xterm);
 
