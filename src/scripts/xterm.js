@@ -1,15 +1,19 @@
 import { Terminal } from "xterm";
 import { FitAddon } from 'xterm-addon-fit';
+import Socket from "./socket";
 
 export default class Xterm {
 
+    socket;
     terminal;
     fitAddon;
-    socket;
     loading = false;    // while loading command from server user input is blocked
     currentLine = '';   // will store text till Enter pressed
+    lineIntro = 'anatoly.dev % ';
 
     constructor(containerId) {
+        this.socket = new Socket();
+
         this.terminal = new Terminal({
             cols: 40,
             rows: 20,
@@ -21,6 +25,7 @@ export default class Xterm {
                 background: 'black'
             }
         });
+        window.terminal = this.terminal;
 
         this.fitAddon = new FitAddon();
         this.terminal.loadAddon(this.fitAddon);
@@ -58,15 +63,6 @@ export default class Xterm {
         this.terminal.onLineFeed(() => {
 
         });
-
-        // this.socket = io('localhost:3001',{
-        //     transports: ['websocket'],
-        //     timeout: 1000
-        // });
-        //
-        // this.socket.on('connect_error', () => {
-        //     console.log('connect_error');
-        // });
     }
 
     commandReset () {
@@ -79,7 +75,7 @@ export default class Xterm {
             await this.processCurrentLine();
         }
         this.terminal.write("\r\n");
-        this.terminal.write("anatoly.dev % ");
+        this.terminal.write(this.lineIntro);
         this.terminal.focus();
     }
 
@@ -105,18 +101,29 @@ export default class Xterm {
         if (command === 'reset') {
             this.commandReset();
         } else if (command === 'start') {
-            console.log('start');
-            this.terminal.write("\x9B?47h");
+            this.switchBuffers(true);
         } else if (command === 'end') {
-            console.log('end');
-            this.terminal.write("\x9B?47l");
+            this.switchBuffers(false);
         } else if (command === 'test') {
             console.log('test');
-            this.terminal.write("\x9B2J");
+            this.test();
         } else {
-            // await this.asyncCommand();
+            await this.asyncCommand();
         }
         this.currentLine = '';
+    }
+
+    test () {
+        console.log(this.terminal);
+        console.log(this.terminal.buffer.normal.getLine(0).translateToString());
+    }
+
+    switchBuffers(alternate) {
+        if (alternate) {
+            this.terminal.write("\x9B?47h");
+        } else {
+            this.terminal.write("\x9B?47l");
+        }
     }
 
     backspace () {
