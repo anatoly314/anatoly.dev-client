@@ -10,6 +10,7 @@ export default class Xterm {
     loading = false;    // while loading command from server user input is blocked
     currentLine = '';   // will store text till Enter pressed
     lineIntro = 'anatoly.dev % ';
+    terminalIntro = 'Welcome to anatoly.dev, type cv to get my CV or help for more options...';
 
     constructor(containerId) {
         this.socket = new Socket();
@@ -33,7 +34,6 @@ export default class Xterm {
         this.terminal.open(document.getElementById(containerId));
         this.fitAddon.fit();
         this.commandReset();
-        this.prompt(false);
 
 
         this.terminal.attachCustomKeyEventHandler(keyEvent => {
@@ -48,6 +48,7 @@ export default class Xterm {
             }
 
             const code = key.charCodeAt(0);
+            //CtrlC
             if (domEvent.ctrlKey && domEvent.key === 'c') { // ctrl+c
                 await this.prompt(false);
             } else if (code === 13) {   // enter
@@ -56,50 +57,91 @@ export default class Xterm {
                 this.backspace();
             }else {
                 this.currentLine += key;
-                this.terminal.write(key);
+                await this.write(key);
             }
         });
 
         this.terminal.onLineFeed(() => {
 
         });
+        this.socket.addEventListener('socket', connected => {
+            console.log('connection changed', connected);
+        });
     }
 
-    commandReset () {
+    async commandReset () {
+        console.log('commandReset');
         this.terminal.reset();
-        this.terminal.write('Welcome to anatoly.dev, type cv to get my CV or help for more options...');
-    }
-
-    async prompt (process) {
-        if (process) {
-            await this.processCurrentLine();
-        }
-        this.terminal.write("\r\n");
-        this.terminal.write(this.lineIntro);
+        await this.printLongText(this.terminalIntro, true);
+        await this.printLineIntro();
         this.terminal.focus();
     }
 
+    async write(text) {
+        return new Promise((resolve, reject) => {
+            this.terminal.write(text, () => {
+                return resolve();
+            });
+        });
+    }
 
-    async asyncCommand () {
-        const sleep = m => new Promise(r => setTimeout(r, m));
-        this.loading = true;
-        const self = this;
-        let animationFrame;
-        function spinner() {
-            if (self.loading) {
-                self.terminal.write('n');
-                animationFrame = requestAnimationFrame(spinner);
-            }
+    async prompt (process) {
+        await this.write('\r\n');
+        if (process) {
+            await this.processCurrentLine();
         }
-        spinner();
-        await sleep(500);
-        this.loading = false;
+        await this.printLineIntro();
+        this.terminal.focus();
+    }
+
+    async printLineIntro () {
+        await this.printLongText(this.lineIntro, false);
+    }
+
+    async printLongText (text, finishWithNewLine) {
+        const self = this;
+        return new Promise(async (resolve, reject) => {
+            let animationFrame;
+            const lines = text.split('\n');
+            let lineIndex = 0;
+            let charIndex = 0;
+            async function printNextChar () {
+                const currentLine = lines[lineIndex];
+                if (currentLine.length > 0 && charIndex < currentLine.length) {
+                    const char = currentLine[charIndex];
+                    await self.write(char);
+                    charIndex++;
+                }
+
+                if (charIndex === currentLine.length && lines.length === 1 && finishWithNewLine){
+                    await self.write('\n\r');
+                    lineIndex++;
+                } else if (charIndex === currentLine.length && lines.length > 1 && lineIndex < lines.length) {
+                    charIndex = 0;
+                    lineIndex++;
+                    await self.write('\n\r');
+                }
+
+                if (lineIndex < lines.length) {
+                    animationFrame = requestAnimationFrame(printNextChar);
+                } else {
+                    return resolve();
+                }
+            }
+            await printNextChar();
+        });
+    }
+
+    async asyncCommand (command) {
+        const response = await this.socket.sendCommand(command);
+        return response;
     }
 
     async processCurrentLine () {
         const command = this.currentLine.trim();
+        this.currentLine = '';
         if (command === 'reset') {
-            this.commandReset();
+            await this.commandReset();
         } else if (command === 'start') {
             this.switchBuffers(true);
         } else if (command === 'end') {
@@ -107,10 +149,19 @@ export default class Xterm {
         } else if (command === 'test') {
             console.log('test');
             this.test();
+        } else if (command === 'async') {
+            await this.printLongText(
+                `name: Anatoly Tarnavsky
+                phone: +(972)547410407
+                email: anatolyt@gmail.com`);
         } else {
-            await this.asyncCommand();
+            const response = await this.asyncCommand(command);
+            if (response) {
+                await this.printLongText(response);
+            } else {
+                await this.printLongText("Unknown command", true);
+            }
         }
-        this.currentLine = '';
     }
 
     test () {

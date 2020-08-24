@@ -10,6 +10,7 @@ module.exports = merge(common, {
     chunkFilename: 'js/[name].chunk.js'
   },
   devServer: {
+    host: '0.0.0.0',
     inline: true,
     hot: true
   },
