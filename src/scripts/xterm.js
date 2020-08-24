@@ -7,7 +7,7 @@ export default class Xterm {
     socket;
     terminal;
     fitAddon;
-    loading = false;    // while loading command from server user input is blocked
+    typingBlocked = false;    // while loading command from server user input is blocked
     currentLine = '';   // will store text till Enter pressed
     lineIntro = 'anatoly.dev % ';
     terminalIntro = 'Welcome to anatoly.dev, type cv to get my CV or help for more options...';
@@ -43,7 +43,7 @@ export default class Xterm {
         });
 
         this.terminal.onKey(async ({ key, domEvent }) => {
-            if (this.loading) {
+            if (this.typingBlocked) {
                 return false;
             }
 
@@ -70,7 +70,6 @@ export default class Xterm {
     }
 
     async commandReset () {
-        console.log('commandReset');
         this.terminal.reset();
         await this.printLongText(this.terminalIntro, true);
         await this.printLineIntro();
@@ -99,6 +98,8 @@ export default class Xterm {
     }
 
     async printLongText (text, finishWithNewLine) {
+        // console.log('beginning');
+        this.typingBlocked = true;
         const self = this;
         return new Promise(async (resolve, reject) => {
             let animationFrame;
@@ -113,8 +114,10 @@ export default class Xterm {
                     charIndex++;
                 }
 
-                if (charIndex === currentLine.length && lines.length === 1 && finishWithNewLine){
-                    await self.write('\n\r');
+                if (charIndex === currentLine.length && lines.length === 1){
+                    if (finishWithNewLine) {
+                        await self.write('\n\r');
+                    }
                     lineIndex++;
                 } else if (charIndex === currentLine.length && lines.length > 1 && lineIndex < lines.length) {
                     charIndex = 0;
@@ -125,6 +128,10 @@ export default class Xterm {
                 if (lineIndex < lines.length) {
                     animationFrame = requestAnimationFrame(printNextChar);
                 } else {
+                    cancelAnimationFrame(animationFrame);
+                    self.typingBlocked = false;
+                    console.log('end');
+
                     return resolve();
                 }
             }
@@ -140,7 +147,9 @@ export default class Xterm {
     async processCurrentLine () {
         const command = this.currentLine.trim();
         this.currentLine = '';
-        if (command === 'reset') {
+        if (command === "") {
+            return;
+        } else if (command === 'reset') {
             await this.commandReset();
         } else if (command === 'start') {
             this.switchBuffers(true);
@@ -159,7 +168,7 @@ export default class Xterm {
             if (response) {
                 await this.printLongText(response);
             } else {
-                await this.printLongText("Unknown command", true);
+                await this.printLongText("Unknown command, wanna hack me? :)", true);
             }
         }
     }
