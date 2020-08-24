@@ -94,11 +94,12 @@ export default class Xterm {
     }
 
     async printLineIntro () {
+        console.log("printLineIntro");
         await this.printLongText(this.lineIntro, false);
     }
 
     async printLongText (text, finishWithNewLine) {
-        // console.log('beginning');
+        console.log('beginning');
         this.typingBlocked = true;
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -128,7 +129,6 @@ export default class Xterm {
                 if (lineIndex < lines.length) {
                     animationFrame = requestAnimationFrame(printNextChar);
                 } else {
-                    cancelAnimationFrame(animationFrame);
                     self.typingBlocked = false;
                     console.log('end');
 
