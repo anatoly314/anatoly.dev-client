@@ -13,6 +13,10 @@ export default class Xterm {
     fitAddon;
     typingBlocked = false;    // while loading command from server user input is blocked
     currentLine = '';   // will store text till Enter pressed
+    commandsBuffer = {
+        commands: [], // will store all commands
+        pointer: -1   // when we will browse history by using arrow keys up/down we will keep pointer to place in the buffer
+    };
 
     async initTerminal () {
         await this.commandReset();
@@ -43,20 +47,27 @@ export default class Xterm {
         this.initTerminal();
 
 
-        this.terminal.attachCustomKeyEventHandler(keyEvent => {
-           if (keyEvent.code.indexOf("Arrow") >= 0) {
-               return false;
-           }
-        });
+        // this.terminal.attachCustomKeyEventHandler(keyEvent => {
+        //    if (keyEvent.code.indexOf("Arrow") >= 0) {
+        //        return false;
+        //    }
+        // });
 
         this.terminal.onKey(async ({ key, domEvent }) => {
             if (this.typingBlocked) {
                 return false;
             }
 
+            const keyCode = domEvent.key;
             const code = key.charCodeAt(0);
-            //CtrlC
-            if (domEvent.ctrlKey && domEvent.key === 'c') { // ctrl+c
+
+            if (keyCode.startsWith("Arrow")) {
+                if (keyCode === "ArrowUp") {
+                    await this.browseHistory(true);
+                } else if (keyCode === "ArrowDown") {
+                    await this.browseHistory(false);
+                }
+            } else if (domEvent.ctrlKey && domEvent.key === 'c') { // ctrl+c
                 await this.prompt(false);
             } else if (code === 13) {   // enter
                 await this.prompt(true);
@@ -68,12 +79,32 @@ export default class Xterm {
             }
         });
 
-        this.terminal.onLineFeed(() => {
-
-        });
         this.socket.addEventListener('socket', connected => {
             console.log('connection changed', connected);
         });
+    }
+
+    async browseHistory (up = true) {
+        if (this.commandsBuffer.commands.length === 0) {
+            return;
+        }
+
+        if (this.commandsBuffer.pointer === -1) {
+            this.commandsBuffer.pointer = this.commandsBuffer.commands.length - 1;  //begin browsing from last command
+        } else if (up && this.commandsBuffer.pointer > 0) {
+            this.commandsBuffer.pointer --;
+        } else if (!up && this.commandsBuffer.pointer < this.commandsBuffer.commands.length - 1) {
+            this.commandsBuffer.pointer ++;
+        }
+        const currentCommand = this.commandsBuffer.commands[this.commandsBuffer.pointer];
+        console.log('currentCommand',currentCommand);
+
+        while(this.currentLine.length > 0) {
+            await this.backspace();
+        }
+
+        this.currentLine = currentCommand;
+        await this.write(currentCommand);
     }
 
     async commandReset () {
@@ -157,6 +188,8 @@ export default class Xterm {
 
     async processCurrentLine () {
         const command = this.currentLine.trim();
+        this.commandsBuffer.commands.push(command);
+        this.commandsBuffer.pointer = -1;
         this.currentLine = '';
         if (command === "") {
             return;
@@ -166,9 +199,8 @@ export default class Xterm {
             this.switchBuffers(true);
         } else if (command === 'end') {
             this.switchBuffers(false);
-        } else if (command === 'test') {
-            console.log('test');
-            this.test();
+        } else if (command === 'history') {
+            await this.printHistory();
         } else if (command === 'async') {
             await this.printText(
                 `name: Anatoly Tarnavsky
@@ -180,9 +212,17 @@ export default class Xterm {
         }
     }
 
-    test () {
-        console.log(this.terminal);
-        console.log(this.terminal.buffer.normal.getLine(0).translateToString());
+    async printHistory () {
+        const history = this.commandsBuffer.commands.reduce((history, line, index, array) => {
+            history += index;
+            history += "\t";
+            history += line.trim();
+            if (index < array.length - 1) {
+                history += "\r\n";
+            }
+            return history;
+        }, '');
+        await this.printText(history, history.split("\n").length === 1 ? true : false);
     }
 
     switchBuffers(alternate) {
