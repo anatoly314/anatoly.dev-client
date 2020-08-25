@@ -47,12 +47,6 @@ export default class Xterm {
         this.initTerminal();
 
 
-        // this.terminal.attachCustomKeyEventHandler(keyEvent => {
-        //    if (keyEvent.code.indexOf("Arrow") >= 0) {
-        //        return false;
-        //    }
-        // });
-
         this.terminal.onKey(async ({ key, domEvent }) => {
             if (this.typingBlocked) {
                 return false;
@@ -195,17 +189,8 @@ export default class Xterm {
             return;
         } else if (command === 'reset') {
             await this.commandReset();
-        } else if (command === 'start') {
-            this.switchBuffers(true);
-        } else if (command === 'end') {
-            this.switchBuffers(false);
         } else if (command === 'history') {
             await this.printHistory();
-        } else if (command === 'async') {
-            await this.printText(
-                `name: Anatoly Tarnavsky
-                phone: +(972)547410407
-                email: anatolyt@gmail.com`);
         } else {
             const response = await this.asyncCommand(command);
             await this.printText(response, response.split("\n").length > 0 ? true : false);
@@ -223,14 +208,6 @@ export default class Xterm {
             return history;
         }, '');
         await this.printText(history, history.split("\n").length === 1 ? true : false);
-    }
-
-    switchBuffers(alternate) {
-        if (alternate) {
-            this.terminal.write("\x9B?47h");
-        } else {
-            this.terminal.write("\x9B?47l");
-        }
     }
 
     backspace () {
