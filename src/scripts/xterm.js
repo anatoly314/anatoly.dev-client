@@ -12,6 +12,11 @@ export default class Xterm {
     lineIntro = 'anatoly.dev % ';
     terminalIntro = 'Welcome to anatoly.dev, type cv to get my CV or help for more options...';
 
+    async initTerminal () {
+        await this.commandReset();
+        await this.printLineIntro();
+    }
+
     constructor(containerId) {
         this.socket = new Socket();
 
@@ -33,7 +38,7 @@ export default class Xterm {
 
         this.terminal.open(document.getElementById(containerId));
         this.fitAddon.fit();
-        this.commandReset();
+        this.initTerminal();
 
 
         this.terminal.attachCustomKeyEventHandler(keyEvent => {
@@ -71,9 +76,9 @@ export default class Xterm {
 
     async commandReset () {
         this.terminal.reset();
-        await this.printLongText(this.terminalIntro, true);
-        await this.printLineIntro();
         this.terminal.focus();
+        await this.printLongText(this.terminalIntro, false);
+        await this.write("\r\n");
     }
 
     async write(text) {
