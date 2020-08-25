@@ -2,6 +2,10 @@ import { Terminal } from "xterm";
 import { FitAddon } from 'xterm-addon-fit';
 import Socket from "./socket";
 
+const LINE_INTRO = "anatoly.dev % ";
+const TERMINAL_INTRO = "Welcome to anatoly.dev, type cv to get my CV or help for more options...";
+const SERVER_DISCONNECTED = "Server not connected, try later...";
+
 export default class Xterm {
 
     socket;
@@ -9,8 +13,6 @@ export default class Xterm {
     fitAddon;
     typingBlocked = false;    // while loading command from server user input is blocked
     currentLine = '';   // will store text till Enter pressed
-    lineIntro = 'anatoly.dev % ';
-    terminalIntro = 'Welcome to anatoly.dev, type cv to get my CV or help for more options...';
 
     async initTerminal () {
         await this.commandReset();
@@ -77,7 +79,7 @@ export default class Xterm {
     async commandReset () {
         this.terminal.reset();
         this.terminal.focus();
-        await this.printLongText(this.terminalIntro, false);
+        await this.printText(TERMINAL_INTRO, false);
         await this.write("\r\n");
     }
 
@@ -99,11 +101,10 @@ export default class Xterm {
     }
 
     async printLineIntro () {
-        console.log("printLineIntro");
-        await this.printLongText(this.lineIntro, false);
+        await this.printText(LINE_INTRO, false);
     }
 
-    async printLongText (text, finishWithNewLine) {
+    async printText (text, finishWithNewLine) {
         console.log('beginning');
         this.typingBlocked = true;
         const self = this;
@@ -145,8 +146,13 @@ export default class Xterm {
     }
 
     async asyncCommand (command) {
-        const response = await this.socket.sendCommand(command);
-        return response;
+        if (!this.socket.connected) {
+            return SERVER_DISCONNECTED;
+        } else {
+            const response = await this.socket.sendCommand(command);
+            return response;
+        }
+
     }
 
     async processCurrentLine () {
@@ -164,17 +170,13 @@ export default class Xterm {
             console.log('test');
             this.test();
         } else if (command === 'async') {
-            await this.printLongText(
+            await this.printText(
                 `name: Anatoly Tarnavsky
                 phone: +(972)547410407
                 email: anatolyt@gmail.com`);
         } else {
             const response = await this.asyncCommand(command);
-            if (response) {
-                await this.printLongText(response);
-            } else {
-                await this.printLongText("Unknown command, wanna hack me? :)", true);
-            }
+            await this.printText(response, response.split("\n").length > 0 ? true : false);
         }
     }
 
