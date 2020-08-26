@@ -8,7 +8,7 @@ let SOCKET_URL = '192.168.1.6:3000';
 if (process.env.NODE_ENV === 'development') {
   require('../index.html');
 } else {
-  SOCKET_URL = 'https://anatoly.dev/socket';
+  SOCKET_URL = 'https://anatoly.dev/';
 }
 
 console.log(process.env.NODE_ENV, SOCKET_URL);
