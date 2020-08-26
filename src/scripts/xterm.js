@@ -1,6 +1,5 @@
 import { Terminal } from "xterm";
 import { FitAddon } from 'xterm-addon-fit';
-import Socket from "./socket";
 
 const LINE_INTRO = "anatoly.dev % ";
 const TERMINAL_INTRO = "Welcome to anatoly.dev, type cv to get my CV or help for more options...";
@@ -18,35 +17,12 @@ export default class Xterm {
         pointer: -1   // when we will browse history by using arrow keys up/down we will keep pointer to place in the buffer
     };
 
-    async initTerminal () {
+    async _initTerminal () {
         await this.commandReset();
         await this.printLineIntro();
     }
 
-    constructor(containerId) {
-        this.socket = new Socket();
-
-        this.terminal = new Terminal({
-            cols: 40,
-            rows: 20,
-            cursorBlink: true,
-            cursorStyle: 'block',
-            fontSize: 20,
-            rendererType: 'canvas',
-            theme: {
-                background: 'black'
-            }
-        });
-        window.terminal = this.terminal;
-
-        this.fitAddon = new FitAddon();
-        this.terminal.loadAddon(this.fitAddon);
-
-        this.terminal.open(document.getElementById(containerId));
-        this.fitAddon.fit();
-        this.initTerminal();
-
-
+    _initListeners () {
         this.terminal.onKey(async ({ key, domEvent }) => {
             if (this.typingBlocked) {
                 return false;
@@ -78,6 +54,33 @@ export default class Xterm {
         });
     }
 
+    constructor(containerId, socket) {
+        this.socket = socket;
+
+        this.terminal = new Terminal({
+            cols: 40,
+            rows: 20,
+            cursorBlink: true,
+            cursorStyle: 'block',
+            fontSize: 20,
+            rendererType: 'canvas',
+            theme: {
+                background: 'black'
+            }
+        });
+        window.terminal = this.terminal;
+
+        this.fitAddon = new FitAddon();
+        this.terminal.loadAddon(this.fitAddon);
+
+        this.terminal.open(document.getElementById(containerId));
+        this.fitAddon.fit();
+        window.onresize = () => this.fitAddon.fit();
+
+        this._initTerminal();
+        this._initListeners();
+    }
+
     async browseHistory (up = true) {
         if (this.commandsBuffer.commands.length === 0) {
             return;
@@ -91,7 +94,6 @@ export default class Xterm {
             this.commandsBuffer.pointer ++;
         }
         const currentCommand = this.commandsBuffer.commands[this.commandsBuffer.pointer];
-        console.log('currentCommand',currentCommand);
 
         while(this.currentLine.length > 0) {
             await this.backspace();
@@ -130,7 +132,6 @@ export default class Xterm {
     }
 
     async printText (text, finishWithNewLine) {
-        console.log('beginning');
         this.typingBlocked = true;
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -161,7 +162,6 @@ export default class Xterm {
                     animationFrame = requestAnimationFrame(printNextChar);
                 } else {
                     self.typingBlocked = false;
-                    console.log('end');
 
                     return resolve();
                 }

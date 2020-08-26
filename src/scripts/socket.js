@@ -5,9 +5,9 @@ export default class Socket extends EventEmitter{
     connected = false;
     socket;
 
-    constructor() {
+    constructor(url) {
         super();
-        this.socket = io('192.168.1.6:3000',{
+        this.socket = io(url,{
             transports: ['websocket'],
             timeout: 1000
         });

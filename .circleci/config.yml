@@ -1,0 +1,58 @@
+version: 2.1
+
+master_only: &master_only
+  filters:
+    branches:
+      only:
+        - master
+
+executors:
+  my-executor:
+    docker:
+      - image: circleci/node:12.9.1-browsers
+    working_directory: ~/repo
+
+jobs:
+  build:
+    executor: my-executor
+
+    steps:
+      - checkout
+
+      - run: npm install
+      - run: npm run build
+
+      - persist_to_workspace:
+          root: ~/repo
+          paths: .
+
+  deploy:
+    executor: my-executor
+
+    steps:
+      - attach_workspace:
+          at: ~/repo
+
+      - add_ssh_keys:
+          fingerprints:
+            - "b3:88:6d:5a:46:55:5a:26:8f:8f:5f:55:dd:38:0c:7f"
+      - run:
+          name: Add to known hosts
+          command: ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+      - run:
+          name: Deploy Over SSH
+          command: |
+            ls -all
+            ssh $SERVER_USER_NAME@$SERVER_IP 'rm -rf /var/www/anatoly.dev/html/*'
+            scp -r dist/* $SERVER_USER_NAME@$SERVER_IP:/var/www/anatoly.dev/html
+workflows:
+  version: 2
+
+  build-deploy:
+    jobs:
+      - build:
+          <<: *master_only
+      - deploy:
+          requires:
+            - build
+          <<: *master_only
