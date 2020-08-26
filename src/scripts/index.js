@@ -1,5 +1,6 @@
 import Xterm from "./xterm";
 import Socket from "./socket";
+import '../favicon.ico';
 
 import '../styles/index.scss';
 
