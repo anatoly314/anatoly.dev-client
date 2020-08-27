@@ -2,7 +2,7 @@ import { Terminal } from "xterm";
 import { FitAddon } from 'xterm-addon-fit';
 
 const LINE_INTRO = "anatoly.dev % ";
-const TERMINAL_INTRO = "Welcome to anatoly.dev, type cv to get my CV or help for more options...";
+const TERMINAL_INTRO = "Welcome to anatoly.dev, type \u001b[1mcv\u001b[22m to get my CV or \u001b[1mhelp\u001b[22m for more options...";
 const SERVER_DISCONNECTED = "Server not connected, try later...";
 
 export default class Xterm {
@@ -106,7 +106,7 @@ export default class Xterm {
     async commandReset () {
         this.terminal.reset();
         this.terminal.focus();
-        await this.printText(TERMINAL_INTRO, false);
+        await this.printFancyText(TERMINAL_INTRO, false);
         await this.write("\r\n");
     }
 
@@ -128,10 +128,10 @@ export default class Xterm {
     }
 
     async printLineIntro () {
-        await this.printText(LINE_INTRO, false);
+        await this.printFancyText(LINE_INTRO, false);
     }
 
-    async printText (text, finishWithNewLine) {
+    async printFancyText (text, finishWithNewLine) {
         this.typingBlocked = true;
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -170,6 +170,16 @@ export default class Xterm {
         });
     }
 
+    async printText (text) {
+        this.typingBlocked = true;
+        const lines = text.split('\n');
+        for (const line of lines) {
+            await this.write(line);
+            await this.write('\n\r');
+        }
+        this.typingBlocked = false;
+    }
+
     async asyncCommand (command) {
         if (!this.socket.connected) {
             return SERVER_DISCONNECTED;
@@ -193,7 +203,11 @@ export default class Xterm {
             await this.printHistory();
         } else {
             const response = await this.asyncCommand(command);
-            await this.printText(response, response.split("\n").length > 0 ? true : false);
+            if (response.fancyTyping) {
+                await this.printFancyText(response.text, response.text.split("\n").length > 0 ? true : false);
+            } else {
+                await this.printText(response.text);
+            }
         }
     }
 
@@ -207,7 +221,7 @@ export default class Xterm {
             }
             return history;
         }, '');
-        await this.printText(history, history.split("\n").length === 1 ? true : false);
+        await this.printFancyText(history, history.split("\n").length === 1 ? true : false);
     }
 
     backspace () {
