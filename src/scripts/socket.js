@@ -26,7 +26,7 @@ export default class Socket extends EventEmitter{
     sendCommand (message) {
         const self = this;
         return new Promise((resolve, reject) => {
-            this.socket.emit('command', message, response => {
+            this.socket.emit('command', message, true, response => {
                 return resolve(response);
             });
         });
