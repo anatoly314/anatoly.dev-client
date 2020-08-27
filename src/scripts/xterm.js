@@ -1,5 +1,7 @@
 import { Terminal } from "xterm";
 import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
+import { Unicode11Addon } from 'xterm-addon-unicode11';
 
 const LINE_INTRO = "anatoly.dev % ";
 const TERMINAL_INTRO = "Welcome to anatoly.dev, type \u001b[1mcv\u001b[22m to get my CV or \u001b[1mhelp\u001b[22m for more options...";
@@ -72,7 +74,10 @@ export default class Xterm {
 
         this.fitAddon = new FitAddon();
         this.terminal.loadAddon(this.fitAddon);
-
+        this.terminal.loadAddon(new WebLinksAddon());
+        this.terminal.loadAddon(new Unicode11Addon());
+        this.terminal.unicode.activeVersion = '11';
+        
         this.terminal.open(document.getElementById(containerId));
         this.fitAddon.fit();
         window.onresize = () => this.fitAddon.fit();
