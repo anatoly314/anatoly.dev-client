@@ -2,6 +2,8 @@ import { Terminal } from "xterm";
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { Unicode11Addon } from 'xterm-addon-unicode11';
+import { saveAs } from 'file-saver';
+
 
 const LINE_INTRO = "anatoly.dev % ";
 const TERMINAL_INTRO = "Welcome to anatoly.dev, type \u001b[1mcv\u001b[22m to get my CV or \u001b[1mhelp\u001b[22m for more options...";
@@ -77,7 +79,7 @@ export default class Xterm {
         this.terminal.loadAddon(new WebLinksAddon());
         this.terminal.loadAddon(new Unicode11Addon());
         this.terminal.unicode.activeVersion = '11';
-        
+
         this.terminal.open(document.getElementById(containerId));
         this.fitAddon.fit();
         window.onresize = () => this.fitAddon.fit();
@@ -200,7 +202,9 @@ export default class Xterm {
         this.commandsBuffer.commands.push(command);
         this.commandsBuffer.pointer = -1;
         this.currentLine = '';
+
         if (command === "") {
+
             return;
         } else if (command === 'reset') {
             await this.commandReset();
@@ -208,10 +212,21 @@ export default class Xterm {
             await this.printHistory();
         } else {
             const response = await this.asyncCommand(command);
+            let textMessage = response.text;
+
+            if (response.filedata) {
+                saveAs(new Blob(response.filedata), response.filename);
+                textMessage += ` as ${response.filename}`;
+            }
+
+            if (response.error) {
+                textMessage = response.error;
+            }
+
             if (response.fancyTyping) {
-                await this.printFancyText(response.text, response.text.split("\n").length > 0 ? true : false);
+                await this.printFancyText(textMessage, textMessage.split("\n").length > 0 ? true : false);
             } else {
-                await this.printText(response.text);
+                await this.printText(textMessage);
             }
         }
     }

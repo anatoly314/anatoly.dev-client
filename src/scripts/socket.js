@@ -1,5 +1,8 @@
 import io from 'socket.io-client';
+import SocketStream from 'socket.io-stream';
 import EventEmitter from "./event-emitter";
+
+const FILE_DOWNLOADED_MESSAGE = "CV has been successfully downloaded";
 
 export default class Socket extends EventEmitter{
     connected = false;
@@ -23,14 +26,61 @@ export default class Socket extends EventEmitter{
         });
     }
 
-    sendCommand (message) {
-        const self = this;
-        return new Promise((resolve, reject) => {
-            this.socket.emit('command', message, true, response => {
-                return resolve(response);
-            });
-        });
+    sendDownloadCommand (message) {
 
+    }
+
+    sendCommand (message) {
+
+        if (message.indexOf("download") >= 0) {
+            return new Promise((resolve, reject) => {
+                const stream = SocketStream.createStream();
+                const fileBuffer = [];
+                let fileLength = 0;
+                SocketStream(this.socket).emit('download', stream, message, true, response => {
+
+                    if (response.error) {
+
+                        return resolve({
+                            text: response.error,
+                            fancyTyping: false
+                        });
+                    } else {
+
+                        stream.on('data', chunk => {
+                            fileBuffer.push(chunk);
+                            fileLength += chunk.length;
+                        });
+
+                        stream.on('end', () => {
+                            const filedata = new Uint8Array(fileLength);
+                            let i = 0;
+
+                            fileBuffer.forEach(function (buff) {
+                                for (let j = 0; j < buff.length; j++) {
+                                    filedata[i] = buff[j];
+                                    i++;
+                                }
+                            });
+
+                            return resolve({
+                                text: FILE_DOWNLOADED_MESSAGE,
+                                filedata: [filedata],
+                                filename: response.filename,
+                                fancyTyping: false
+                            });
+                        });
+                    }
+
+                });
+            });
+        } else {
+            return new Promise((resolve, reject) => {
+                this.socket.emit('command', message, true, response => {
+                    return resolve(response);
+                });
+            });
+        }
     }
 
     dispatchConnectionEvent () {
