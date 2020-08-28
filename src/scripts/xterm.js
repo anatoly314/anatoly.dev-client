@@ -3,10 +3,12 @@ import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { Unicode11Addon } from 'xterm-addon-unicode11';
 import { saveAs } from 'file-saver';
+import {isMobile} from "./utils";
 
 
 const LINE_INTRO = "anatoly.dev % ";
 const TERMINAL_INTRO = "Welcome to anatoly.dev, type \u001b[1mcv\u001b[22m to get my CV or \u001b[1mhelp\u001b[22m for more options...";
+const MOBILE_WARNING = "\u001b[1mFor better experience use on desktop/pc computer\u001b[22m";
 const SERVER_DISCONNECTED = "Server not connected, try later...";
 
 export default class Xterm {
@@ -113,6 +115,9 @@ export default class Xterm {
     async commandReset () {
         this.terminal.reset();
         this.terminal.focus();
+        if (isMobile()) {
+            await this.printFancyText(MOBILE_WARNING, true);
+        }
         await this.printFancyText(TERMINAL_INTRO, false);
         await this.write("\r\n");
     }
@@ -204,7 +209,6 @@ export default class Xterm {
         this.currentLine = '';
 
         if (command === "") {
-
             return;
         } else if (command === 'reset') {
             await this.commandReset();
