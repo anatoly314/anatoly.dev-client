@@ -4,7 +4,7 @@ import '../favicon.ico';
 
 import '../styles/index.scss';
 
-let SOCKET_URL = '192.168.1.6:3000';
+let SOCKET_URL = '192.168.1.6:3001';
 
 if (process.env.NODE_ENV === 'development') {
   require('../index.html');

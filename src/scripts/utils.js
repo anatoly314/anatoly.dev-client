@@ -6,3 +6,25 @@ export function isMobile(){
     }
     return isMobile;
 }
+
+export function getMobileOperatingSystem() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+    let osType = "unknown";
+    // Windows Phone must come first because its UA also contains "Android"
+    if (/windows phone/i.test(userAgent)) {
+        osType = "Windows Phone";
+    }
+
+    if (/android/i.test(userAgent)) {
+        osType = "Android";
+    }
+
+    // iOS detection from: http://stackoverflow.com/a/9039885/177710
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        osType = "iOS";
+    }
+
+    console.log(osType);
+    return osType;
+}

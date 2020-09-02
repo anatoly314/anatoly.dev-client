@@ -3,7 +3,7 @@ import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { Unicode11Addon } from 'xterm-addon-unicode11';
 import { saveAs } from 'file-saver';
-import {isMobile} from "./utils";
+import { getMobileOperatingSystem, isMobile } from "./utils";
 
 
 const LINE_INTRO = "anatoly.dev % ";
@@ -13,6 +13,8 @@ const SERVER_DISCONNECTED = "Server not connected, try later...";
 
 export default class Xterm {
 
+    isMobile;
+    osType;
     socket;
     terminal;
     fitAddon;
@@ -28,7 +30,19 @@ export default class Xterm {
         await this.printLineIntro();
     }
 
-    _initListeners () {
+    _initAndroidKeyListeners() {
+        this.terminal.onData(async data => {
+            if (data.trim().length > 0) {
+                await this.write(data);
+                this.currentLine = data;
+                await this.write("\r\n");
+                await this.processCurrentLine();
+                await this.printLineIntro();
+            }
+        });
+    }
+
+    _initKeyListeners () {
         this.terminal.onKey(async ({ key, domEvent }) => {
             if (this.typingBlocked) {
                 return false;
@@ -54,7 +68,9 @@ export default class Xterm {
                 await this.write(key);
             }
         });
+    }
 
+    _initSocketOnChangeListener() {
         this.socket.addEventListener('socket', connected => {
             console.log('connection changed', connected);
         });
@@ -64,8 +80,6 @@ export default class Xterm {
         this.socket = socket;
 
         this.terminal = new Terminal({
-            cols: 40,
-            rows: 20,
             cursorBlink: true,
             cursorStyle: 'block',
             fontSize: 20,
@@ -87,7 +101,16 @@ export default class Xterm {
         window.onresize = () => this.fitAddon.fit();
 
         this._initTerminal();
-        this._initListeners();
+        this._initSocketOnChangeListener();
+
+        this.osType = getMobileOperatingSystem();
+        this.isMobile = isMobile();
+
+        if (this.osType === 'Android') {
+            this._initAndroidKeyListeners();
+        } else {
+            this._initKeyListeners();
+        }
     }
 
     async browseHistory (up = true) {
@@ -194,9 +217,11 @@ export default class Xterm {
 
     async asyncCommand (command) {
         if (!this.socket.connected) {
-            return SERVER_DISCONNECTED;
+            return {
+                error: SERVER_DISCONNECTED
+            };
         } else {
-            const response = await this.socket.sendCommand(command);
+            const response = await this.socket.sendCommand(command, this.isMobile, this.terminal.cols, this.osType);
             return response;
         }
 

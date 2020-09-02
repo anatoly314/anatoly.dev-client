@@ -26,18 +26,21 @@ export default class Socket extends EventEmitter{
         });
     }
 
-    sendDownloadCommand (message) {
+    sendCommand (command, isMobile, cols, osType) {
 
-    }
+        const serverCommand = {
+            command: command,
+            isMobile: isMobile,
+            cols: cols,
+            osType: osType
+        };
 
-    sendCommand (message) {
-
-        if (message.indexOf("download") >= 0) {
+        if (command.indexOf("download") >= 0) {
             return new Promise((resolve, reject) => {
                 const stream = SocketStream.createStream();
                 const fileBuffer = [];
                 let fileLength = 0;
-                SocketStream(this.socket).emit('download', stream, message, true, response => {
+                SocketStream(this.socket).emit('download', stream, serverCommand, response => {
 
                     if (response.error) {
 
@@ -76,7 +79,7 @@ export default class Socket extends EventEmitter{
             });
         } else {
             return new Promise((resolve, reject) => {
-                this.socket.emit('command', message, true, response => {
+                this.socket.emit('command', serverCommand, response => {
                     return resolve(response);
                 });
             });
