@@ -1,6 +1,7 @@
 import Xterm from "./xterm";
 import Socket from "./socket";
 import '../favicon.ico';
+import { getFingerPrintComponents } from "./fingerprint";
 
 import '../styles/index.scss';
 
@@ -12,8 +13,12 @@ if (process.env.NODE_ENV === 'development') {
   SOCKET_URL = 'https://anatoly.dev/';
 }
 
-console.log(process.env.NODE_ENV, SOCKET_URL);
 const socket = new Socket(SOCKET_URL);
+socket.addEventListener('socket', async connected => {
+  const components = await getFingerPrintComponents();
+  console.log(components);
+});
+
 const xterm = new Xterm('xterm', socket);
 
 window.onresize = () => xterm.fitAddon.fit();
