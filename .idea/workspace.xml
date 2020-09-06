@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="13b99562-3d67-45be-8c75-d778766e6bfa" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/avatar.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/src/assets/avatar.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -31,6 +33,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/assets" />
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/public" />
     </key>
@@ -209,9 +212,10 @@
     <state width="1419" height="243" key="GridCell.Tab.3.right/0.0.1440.900@0.0.1440.900" timestamp="1597841518043" />
     <state width="1899" height="399" key="GridCell.Tab.3.right/0.0.1920.1200@0.0.1920.1200" timestamp="1598479029184" />
     <state width="1899" height="227" key="GridCell.Tab.3.right/1920.0.1440.900/0.0.1920.1200@0.0.1920.1200" timestamp="1598601878243" />
-    <state x="667" y="355" width="586" height="490" key="find.popup" timestamp="1598553644715">
-      <screen x="0" y="0" width="1920" height="1200" />
+    <state x="-1253" y="355" width="586" height="490" key="find.popup" timestamp="1599408248145">
+      <screen x="-1920" y="0" width="1920" height="1200" />
     </state>
+    <state x="-1253" y="355" width="586" height="490" key="find.popup/0.0.1440.900/-1920.0.1920.1200@-1920.0.1920.1200" timestamp="1599408248145" />
     <state x="667" y="355" width="586" height="490" key="find.popup/1920.0.1440.900/0.0.1920.1200@0.0.1920.1200" timestamp="1598553644715" />
     <state x="625" y="287" key="run.anything.popup" timestamp="1598540881939">
       <screen x="0" y="23" width="1920" height="1097" />
