@@ -3,7 +3,9 @@ import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { Unicode11Addon } from 'xterm-addon-unicode11';
 import { saveAs } from 'file-saver';
+
 import { getMobileOperatingSystem, isMobile } from "./utils";
+import { getFilteredFingerPrintComponents, getPrintableFingerPrint } from "./fingerprint";
 
 
 const LINE_INTRO = "anatoly.dev % ";
@@ -13,6 +15,7 @@ const SERVER_DISCONNECTED = "Server not connected, try later...";
 
 export default class Xterm {
 
+    ip = "Not connected yet, try later";
     isMobile;
     osType;
     socket;
@@ -71,8 +74,15 @@ export default class Xterm {
     }
 
     _initSocketOnChangeListener() {
-        this.socket.addEventListener('socket', connected => {
+        this.socket.addEventListener('socket', async connected => {
             console.log('connection changed', connected);
+            const components = await getFilteredFingerPrintComponents();
+            const response = await this.asyncCommand('fingerprint', components);
+            console.log(response);
+        });
+
+        this.socket.addEventListener('client_ip', ip => {
+            this.ip = ip;
         });
     }
 
@@ -215,16 +225,15 @@ export default class Xterm {
         this.typingBlocked = false;
     }
 
-    async asyncCommand (command) {
+    async asyncCommand (command, data) {
         if (!this.socket.connected) {
             return {
                 error: SERVER_DISCONNECTED
             };
         } else {
-            const response = await this.socket.sendCommand(command, this.isMobile, this.terminal.cols, this.osType);
+            const response = await this.socket.sendCommand(command, data, this.isMobile, this.terminal.cols, this.osType);
             return response;
         }
-
     }
 
     async processCurrentLine () {
@@ -239,6 +248,10 @@ export default class Xterm {
             await this.commandReset();
         } else if (command === 'history') {
             await this.printHistory();
+        } else if (command === 'fingerprint') {
+            await this.printFingerprint();
+        } else if (command === 'ip') {
+            await this.printIP();
         } else {
             const response = await this.asyncCommand(command);
             let textMessage = response.text;
@@ -258,6 +271,15 @@ export default class Xterm {
                 await this.printText(textMessage);
             }
         }
+    }
+
+    async printIP () {
+        await this.printText(this.ip);
+    }
+
+    async printFingerprint () {
+        const printableFingerprint = await getPrintableFingerPrint(this.ip);
+        await this.printText(printableFingerprint);
     }
 
     async printHistory () {

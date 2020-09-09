@@ -10,6 +10,7 @@ export default class Socket extends EventEmitter{
 
     constructor(url) {
         super();
+        const self = this;
         this.socket = io(url,{
             transports: ['websocket'],
             timeout: 1000
@@ -24,15 +25,20 @@ export default class Socket extends EventEmitter{
             this.connected = true;
             this.dispatchConnectionEvent();
         });
+
+        this.socket.on('client_ip', (ip) => {
+            this.dispatchEvent('client_ip', [ip]);
+        });
     }
 
-    sendCommand (command, isMobile, cols, osType) {
+    sendCommand (command, data, isMobile, cols, osType) {
 
         const serverCommand = {
             command: command,
             isMobile: isMobile,
             cols: cols,
-            osType: osType
+            osType: osType,
+            data: data
         };
 
         if (command.indexOf("download") >= 0) {
