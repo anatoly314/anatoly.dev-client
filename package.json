@@ -60,6 +60,7 @@
     "xterm-addon-web-links": "^0.4.0",
     "xterm-addon-unicode11": "^0.2.0",
     "socket.io-stream": "^0.9.1",
-    "file-saver": "^2.0.2"
+    "file-saver": "^2.0.2",
+    "fingerprintjs2": "^2.1.2"
   }
 }

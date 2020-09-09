@@ -1,6 +1,7 @@
 import Xterm from "./xterm";
 import Socket from "./socket";
 import '../favicon.ico';
+import { filteredFingerPrintComponents } from "./fingerprint";
 
 import '../styles/index.scss';
 
@@ -12,7 +13,6 @@ if (process.env.NODE_ENV === 'development') {
   SOCKET_URL = 'https://anatoly.dev/';
 }
 
-console.log(process.env.NODE_ENV, SOCKET_URL);
 const socket = new Socket(SOCKET_URL);
 const xterm = new Xterm('xterm', socket);
 
