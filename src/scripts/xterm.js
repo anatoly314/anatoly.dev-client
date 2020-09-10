@@ -174,6 +174,7 @@ export default class Xterm {
         if (process) {
             await this.processCurrentLine();
         }
+        this.currentLine = '';
         await this.printLineIntro();
         this.terminal.focus();
     }
@@ -246,7 +247,6 @@ export default class Xterm {
         const command = this.currentLine.trim();
         this.commandsBuffer.commands.push(command);
         this.commandsBuffer.pointer = -1;
-        this.currentLine = '';
 
         if (command === "") {
             return;
