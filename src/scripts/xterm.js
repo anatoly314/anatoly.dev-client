@@ -35,12 +35,17 @@ export default class Xterm {
 
     _initAndroidKeyListeners() {
         this.terminal.onData(async data => {
-            if (data.trim().length > 0) {
-                await this.write(data);
-                this.currentLine = data;
+            if (this.typingBlocked) {
+                return false;
+            }
+
+            if (data.length > 0 && data === "\r") {
                 await this.write("\r\n");
                 await this.processCurrentLine();
                 await this.printLineIntro();
+            } else if (data.trim().length > 0) {
+                await this.write(data);
+                this.currentLine += data;
             }
         });
     }
@@ -121,6 +126,7 @@ export default class Xterm {
         } else {
             this._initKeyListeners();
         }
+
     }
 
     async browseHistory (up = true) {
