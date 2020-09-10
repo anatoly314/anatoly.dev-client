@@ -33,22 +33,20 @@ export default class Xterm {
         await this.printLineIntro();
     }
 
-    _initAndroidKeyListeners() {
+    _initPrintableKeyListener() {
         this.terminal.onData(async data => {
             if (this.typingBlocked) {
                 return false;
             }
 
-            if (data.length > 0 && data === "\r") {
-                await this.prompt(true);
-            } else if (data.trim().length > 0) {
+            if (data.trim().length > 0 && data.charCodeAt(0) >= 40 && data.charCodeAt(0) < 127) {
                 await this.write(data);
                 this.currentLine += data;
             }
         });
     }
 
-    _initKeyListeners () {
+    _initControlKeyListeners () {
         this.terminal.onKey(async ({ key, domEvent }) => {
             if (this.typingBlocked) {
                 return false;
@@ -69,9 +67,6 @@ export default class Xterm {
                 await this.prompt(true);
             } else if (code === 127) { // backspace
                 this.backspace();
-            }else {
-                this.currentLine += key;
-                await this.write(key);
             }
         });
     }
@@ -119,11 +114,8 @@ export default class Xterm {
         this.osType = getMobileOperatingSystem();
         this.isMobile = isMobile();
 
-        if (this.osType === 'Android') {
-            this._initAndroidKeyListeners();
-        } else {
-            this._initKeyListeners();
-        }
+        this._initPrintableKeyListener();
+        this._initControlKeyListeners();
 
     }
 
