@@ -6,6 +6,7 @@ import { filteredFingerPrintComponents } from "./fingerprint";
 import '../styles/index.scss';
 
 let SOCKET_URL = '192.168.1.6:3001';
+SOCKET_URL = 'https://anatoly.dev/';
 
 if (process.env.NODE_ENV === 'development') {
   require('../index.html');

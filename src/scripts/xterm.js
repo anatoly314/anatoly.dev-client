@@ -40,9 +40,7 @@ export default class Xterm {
             }
 
             if (data.length > 0 && data === "\r") {
-                await this.write("\r\n");
-                await this.processCurrentLine();
-                await this.printLineIntro();
+                await this.prompt(true);
             } else if (data.trim().length > 0) {
                 await this.write(data);
                 this.currentLine += data;
@@ -245,8 +243,10 @@ export default class Xterm {
 
     async processCurrentLine () {
         const command = this.currentLine.trim();
-        this.commandsBuffer.commands.push(command);
-        this.commandsBuffer.pointer = -1;
+        if (command !== "") {
+            this.commandsBuffer.commands.push(command);
+            this.commandsBuffer.pointer = -1;
+        }
 
         if (command === "") {
             return;
