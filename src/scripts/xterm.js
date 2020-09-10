@@ -39,7 +39,9 @@ export default class Xterm {
                 return false;
             }
 
-            if (data.trim().length > 0 && data.charCodeAt(0) >= 40 && data.charCodeAt(0) < 127) {
+
+            if (data.length > 0 && data.charCodeAt(0) >= 32 && data.charCodeAt(0) < 127) {
+                console.log(data.charCodeAt(0));
                 await this.write(data);
                 this.currentLine += data;
             }
